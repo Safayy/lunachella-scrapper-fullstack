@@ -1,5 +1,6 @@
 const express = require("express");
-const puppeteer = require("puppeteer"); // full puppeteer
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
@@ -18,8 +19,10 @@ app.get("/kuala-lumpur", async (req, res) => {
     let browser = null;
     try {
         browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"], // required in most serverless/hosted environments
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
         });
 
         const page = await browser.newPage();
@@ -43,6 +46,7 @@ app.get("/kuala-lumpur", async (req, res) => {
         );
 
         await browser.close();
+
         res.status(200).json(events.filter((e) => e.name));
     } catch (error) {
         if (browser) await browser.close();
