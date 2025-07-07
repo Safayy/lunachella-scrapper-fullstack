@@ -23,7 +23,7 @@ app.get("/kuala-lumpur", async (req, res) => {
         let launchOptions = { headless: true };
 
         if (isRender) {
-            const executablePath = chromium.executablePath || "/usr/bin/chromium-browser";
+            const executablePath = chromium.executablePath;
 
             console.log("✅ Render detected, using chromium:");
             console.log("  executablePath:", executablePath);
