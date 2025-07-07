@@ -1,6 +1,5 @@
 const express = require("express");
-const puppeteer = require("puppeteer-core"); // use puppeteer-core
-const chromium = require("@sparticuz/chromium"); // import chromium
+const puppeteer = require("puppeteer"); // full puppeteer
 const cors = require("cors");
 const dotenv = require("dotenv");
 
@@ -9,7 +8,7 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-const PORT = process.env.PORT || 3005;  // <-- Use Render's PORT env or fallback
+const PORT = process.env.PORT || 3005;
 
 app.get("/kuala-lumpur", async (req, res) => {
     if (!process.env.TARGET_URL) {
@@ -19,10 +18,8 @@ app.get("/kuala-lumpur", async (req, res) => {
     let browser = null;
     try {
         browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: chromium.executablePath,
-            headless: chromium.headless,
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"], // required in most serverless/hosted environments
         });
 
         const page = await browser.newPage();
@@ -46,7 +43,6 @@ app.get("/kuala-lumpur", async (req, res) => {
         );
 
         await browser.close();
-
         res.status(200).json(events.filter((e) => e.name));
     } catch (error) {
         if (browser) await browser.close();
