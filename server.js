@@ -1,15 +1,17 @@
 const express = require("express");
-const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
-
 const app = express();
 app.use(cors());
 
 const PORT = process.env.PORT || 3005;
+
+// Conditional require
+const useChromium = process.env.USE_CHROMIUM === "true";
+const puppeteer = useChromium ? require("puppeteer-core") : require("puppeteer");
+const chromium = useChromium ? require("@sparticuz/chromium") : null;
 
 app.get("/kuala-lumpur", async (req, res) => {
     if (!process.env.TARGET_URL) {
@@ -18,12 +20,18 @@ app.get("/kuala-lumpur", async (req, res) => {
 
     let browser = null;
     try {
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: chromium.executablePath,
-            headless: chromium.headless,
-        });
+        browser = await puppeteer.launch(
+            useChromium
+                ? {
+                    args: chromium.args,
+                    defaultViewport: chromium.defaultViewport,
+                    executablePath: await chromium.executablePath(),
+                    headless: chromium.headless,
+                }
+                : {
+                    headless: true,
+                }
+        );
 
         const page = await browser.newPage();
 
@@ -33,7 +41,6 @@ app.get("/kuala-lumpur", async (req, res) => {
         });
 
         await autoScroll(page);
-
         await page.waitForSelector(".AtIvjk2YjzXSULT1cmVx");
 
         const events = await page.$$eval(".AtIvjk2YjzXSULT1cmVx", (nodes) =>
@@ -46,7 +53,6 @@ app.get("/kuala-lumpur", async (req, res) => {
         );
 
         await browser.close();
-
         res.status(200).json(events.filter((e) => e.name));
     } catch (error) {
         if (browser) await browser.close();
