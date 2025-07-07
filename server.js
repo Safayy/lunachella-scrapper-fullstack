@@ -11,12 +11,17 @@ const PORT = process.env.PORT || 3005;
 // Detect environment
 const isRender = process.env.USE_CHROMIUM === "true";
 const puppeteer = isRender ? require("puppeteer-core") : require("puppeteer");
-const chromium = isRender ? require("@sparticuz/chromium").default : null; // ✅ FIXED HERE
+const chromium = isRender ? require("@sparticuz/chromium").default : null;
 
 app.get("/kuala-lumpur", async (req, res) => {
+    console.log("📥 GET /kuala-lumpur triggered");
+
     if (!process.env.TARGET_URL) {
+        console.log("❌ TARGET_URL not set");
         return res.status(500).json({ error: "TARGET_URL env variable not set" });
     }
+
+    console.log("🌐 TARGET_URL:", process.env.TARGET_URL);
 
     let browser = null;
     try {
@@ -41,17 +46,23 @@ app.get("/kuala-lumpur", async (req, res) => {
             console.log("✅ Local detected, using full puppeteer");
         }
 
+        console.log("🚀 Launching browser...");
         browser = await puppeteer.launch(launchOptions);
 
         const page = await browser.newPage();
+        console.log("🌍 Navigating to:", process.env.TARGET_URL);
         await page.goto(process.env.TARGET_URL, {
             waitUntil: "networkidle2",
             timeout: 120000,
         });
 
+        console.log("🧹 Scrolling...");
         await autoScroll(page);
+
+        console.log("⏳ Waiting for selector...");
         await page.waitForSelector(".AtIvjk2YjzXSULT1cmVx");
 
+        console.log("🔍 Scraping elements...");
         const events = await page.$$eval(".AtIvjk2YjzXSULT1cmVx", (nodes) =>
             nodes.map((el) => ({
                 name: el.querySelector("._5CQoAbgUFZI3p33kRVk")?.innerText.trim() || "",
@@ -61,6 +72,7 @@ app.get("/kuala-lumpur", async (req, res) => {
             }))
         );
 
+        console.log("✅ Scraping done. Events:", events.length);
         await browser.close();
         res.status(200).json(events.filter((e) => e.name));
     } catch (error) {
@@ -87,8 +99,10 @@ async function autoScroll(page) {
         });
     });
 }
+
+// Just log the chromium path once on server startup (for Render debugging)
 if (isRender) {
-    chromium.executablePath().then(p => console.log("🧪 Chromium path before launch:", p));
+    chromium.executablePath().then((p) => console.log("🧪 Chromium path before launch:", p));
 }
 
 app.listen(PORT, () => {
