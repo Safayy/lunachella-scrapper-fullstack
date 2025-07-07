@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@sparticuz/chromium": "^137.0.1",
     "axios": "^1.10.0",
     "chrome-aws-lambda": "^10.1.0",
     "cors": "^2.8.5",
@@ -17,6 +19,7 @@
     "express": "^5.1.0",
     "jsdom": "^26.1.0",
     "pg": "^8.16.3",
-    "puppeteer": "^24.11.2"
+    "puppeteer": "^24.11.2",
+    "puppeteer-core": "^24.11.2"
   }
 }

@@ -1,5 +1,6 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core"); // use puppeteer-core
+const chromium = require("@sparticuz/chromium"); // import chromium
 const cors = require("cors");
 const dotenv = require("dotenv");
 
@@ -8,7 +9,7 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-const PORT = 3005;
+const PORT = process.env.PORT || 3005;  // <-- Use Render's PORT env or fallback
 
 app.get("/kuala-lumpur", async (req, res) => {
     if (!process.env.TARGET_URL) {
@@ -18,8 +19,10 @@ app.get("/kuala-lumpur", async (req, res) => {
     let browser = null;
     try {
         browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
         });
 
         const page = await browser.newPage();
