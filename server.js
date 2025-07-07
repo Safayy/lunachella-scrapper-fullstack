@@ -8,10 +8,10 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3005;
 
-// Conditional require
-const useChromium = process.env.USE_CHROMIUM === "true";
-const puppeteer = useChromium ? require("puppeteer-core") : require("puppeteer");
-const chromium = useChromium ? require("@sparticuz/chromium") : null;
+// Detect environment
+const isRender = process.env.USE_CHROMIUM === "true";
+const puppeteer = isRender ? require("puppeteer-core") : require("puppeteer");
+const chromium = isRender ? require("@sparticuz/chromium") : null;
 
 app.get("/kuala-lumpur", async (req, res) => {
     if (!process.env.TARGET_URL) {
@@ -20,21 +20,29 @@ app.get("/kuala-lumpur", async (req, res) => {
 
     let browser = null;
     try {
-        browser = await puppeteer.launch(
-            useChromium
-                ? {
-                    args: chromium.args,
-                    defaultViewport: chromium.defaultViewport,
-                    executablePath: await chromium.executablePath(),
-                    headless: chromium.headless,
-                }
-                : {
-                    headless: true,
-                }
-        );
+        let launchOptions = { headless: true };
+
+        if (isRender) {
+            const executablePath = typeof chromium.executablePath === "function"
+                ? await chromium.executablePath()
+                : chromium.executablePath;
+
+            console.log("✅ Render detected, using chromium:");
+            console.log("  executablePath:", executablePath);
+
+            launchOptions = {
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath,
+                headless: chromium.headless,
+            };
+        } else {
+            console.log("✅ Local detected, using full puppeteer");
+        }
+
+        browser = await puppeteer.launch(launchOptions);
 
         const page = await browser.newPage();
-
         await page.goto(process.env.TARGET_URL, {
             waitUntil: "networkidle2",
             timeout: 120000,
@@ -56,7 +64,7 @@ app.get("/kuala-lumpur", async (req, res) => {
         res.status(200).json(events.filter((e) => e.name));
     } catch (error) {
         if (browser) await browser.close();
-        console.error("Scraping failed:", error.message);
+        console.error("❌ Scraping failed:", error.message);
         res.status(500).json({ error: "Scraping failed", details: error.message });
     }
 });
@@ -80,5 +88,5 @@ async function autoScroll(page) {
 }
 
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
