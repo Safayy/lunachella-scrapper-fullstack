@@ -23,9 +23,7 @@ app.get("/kuala-lumpur", async (req, res) => {
         let launchOptions = { headless: true };
 
         if (isRender) {
-            const executablePath = typeof chromium.executablePath === "function"
-                ? await chromium.executablePath()
-                : chromium.executablePath;
+            const executablePath = chromium.executablePath || "/usr/bin/chromium-browser";
 
             console.log("✅ Render detected, using chromium:");
             console.log("  executablePath:", executablePath);
@@ -35,6 +33,7 @@ app.get("/kuala-lumpur", async (req, res) => {
                 defaultViewport: chromium.defaultViewport,
                 executablePath,
                 headless: chromium.headless,
+                ignoreHTTPSErrors: true,
             };
         } else {
             console.log("✅ Local detected, using full puppeteer");
