@@ -6,7 +6,7 @@ const dotenv = require("dotenv");
 
 const app = express();
 app.use(cors());
-const PORT = 3005;
+const PORT = 3000;
 dotenv.config();
 
 app.get("/kuala-lumpur", async (req, res) => {
