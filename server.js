@@ -87,6 +87,9 @@ async function autoScroll(page) {
         });
     });
 }
+if (isRender) {
+    chromium.executablePath().then(p => console.log("🧪 Chromium path before launch:", p));
+}
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
