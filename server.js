@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3005;
 // Detect environment
 const isRender = process.env.USE_CHROMIUM === "true";
 const puppeteer = isRender ? require("puppeteer-core") : require("puppeteer");
-const chromium = isRender ? require("@sparticuz/chromium") : null;
+const chromium = isRender ? require("@sparticuz/chromium").default : null; // ✅ FIXED HERE
 
 app.get("/kuala-lumpur", async (req, res) => {
     if (!process.env.TARGET_URL) {
