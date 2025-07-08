@@ -1,19 +1,20 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const puppeteer = require("puppeteer-core");
+const { default: chromium } = require("@sparticuz/chromium");
+const serverless = require("serverless-http");
 
 dotenv.config();
 const app = express();
 app.use(cors());
 
-const PORT = process.env.PORT || 3005;
+// ✅ Root route just to verify it's alive
+app.get("/", (req, res) => {
+    res.send("✅ Puppeteer scraper API is running!");
+});
 
-// Detect environment
-const isRender = process.env.USE_CHROMIUM === "true";
-const puppeteer = require("puppeteer-core");
-const { default: chromium } = require("@sparticuz/chromium");
-const serverless = require("serverless-http");
-
+// 📥 Main route
 app.get("/kuala-lumpur", async (req, res) => {
     console.log("📥 GET /kuala-lumpur triggered");
 
@@ -22,32 +23,22 @@ app.get("/kuala-lumpur", async (req, res) => {
         return res.status(500).json({ error: "TARGET_URL env variable not set" });
     }
 
-    console.log("🌐 TARGET_URL:", process.env.TARGET_URL);
-
     let browser = null;
+
     try {
-        let launchOptions = { headless: true };
+        const executablePath = typeof chromium.executablePath === "function"
+            ? await chromium.executablePath()
+            : chromium.executablePath;
 
-        if (isRender) {
-            const executablePath = typeof chromium.executablePath === "function"
-                ? await chromium.executablePath()
-                : chromium.executablePath;
+        const launchOptions = {
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath,
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+        };
 
-            console.log("✅ Render detected, using chromium:");
-            console.log("  executablePath:", executablePath);
-
-            launchOptions = {
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            };
-        } else {
-            console.log("✅ Local detected, using full puppeteer");
-        }
-
-        console.log("🚀 Launching browser...");
+        console.log("🚀 Launching Chromium...");
         browser = await puppeteer.launch(launchOptions);
 
         const page = await browser.newPage();
@@ -83,6 +74,7 @@ app.get("/kuala-lumpur", async (req, res) => {
     }
 });
 
+// 🧹 Auto-scrolling function
 async function autoScroll(page) {
     await page.evaluate(async () => {
         await new Promise((resolve) => {
@@ -101,10 +93,6 @@ async function autoScroll(page) {
     });
 }
 
-// Just log the chromium path once on server startup (for Render debugging)
-if (isRender) {
-    chromium.executablePath().then((p) => console.log("🧪 Chromium path before launch:", p));
-}
-
+// ✅ Export for Vercel
 module.exports = app;
 module.exports.handler = serverless(app);
