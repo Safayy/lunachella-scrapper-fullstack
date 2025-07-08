@@ -10,8 +10,9 @@ const PORT = process.env.PORT || 3005;
 
 // Detect environment
 const isRender = process.env.USE_CHROMIUM === "true";
-const puppeteer = isRender ? require("puppeteer-core") : require("puppeteer");
-const chromium = isRender ? require("@sparticuz/chromium").default : null;
+const puppeteer = require("puppeteer-core");
+const { default: chromium } = require("@sparticuz/chromium");
+const serverless = require("serverless-http");
 
 app.get("/kuala-lumpur", async (req, res) => {
     console.log("📥 GET /kuala-lumpur triggered");
@@ -105,6 +106,5 @@ if (isRender) {
     chromium.executablePath().then((p) => console.log("🧪 Chromium path before launch:", p));
 }
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+module.exports = app;
+module.exports.handler = serverless(app);
